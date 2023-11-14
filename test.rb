@@ -3,41 +3,60 @@ require "google_drive"
 session = GoogleDrive::Session.from_config("config.json")
 spreadsheet = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
 worksheet = spreadsheet.worksheets[0]
-tabela_niz = worksheet.rows
+sheet = worksheet.rows
 
-class Tabela
-
+class Table
   include Enumerable
 
-  def initialize(tabela)
-    @t = tabela
+  def initialize(n)
+    @sheet = n
   end
 
   def row(row)
-    @t[row-1]
+    @sheet[row]
+  end
+
+  def sheet
+    @sheet
   end
 
   def each
-    @t.each do |row|
-      row.each do |n|
-        yield n
+    @sheet.each do |row|
+      row.each do |el|
+        yield(el)
       end
     end
   end
 
-  def [] (kolona)
-    k = @t.first.index(kolona)
-    raise "Kolona ne postoji" unless k
+  def [](col)
+    idx = @sheet.first.index(col)
+    raise "Column not found" unless idx
 
-    @t.drop(1).map{ |row| row[k]}
+    Column.new(self, idx)
   end
 
+class Column
+    def initialize(table, idx)
+      @te = table
+      @col = idx
+    end
+
+    def [] row
+      @te.sheet[row][@col]
+    end
+
+    def []=(row, value)
+      @te.sheet[row, @col] = value
+      @te.sheet.save
+    end
+
+  end
 end
 
-tabela = Tabela.new(tabela_niz)
 
-# tabela.each do |n|
-#   p n
-# end
-
-p tabela["Prva Kolona"]
+ table = Table.new(sheet)
+# row_dva = table.row(1)
+# p row_dva
+# table.each {|k| p k}
+p table["Prva Kolona"][1]
+# table["Prva Kolona"][1]= 2556
