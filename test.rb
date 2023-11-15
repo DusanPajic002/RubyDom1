@@ -2,61 +2,62 @@ require "google_drive"
 
 session = GoogleDrive::Session.from_config("config.json")
 spreadsheet = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
-worksheet = spreadsheet.worksheets[0]
-sheet = worksheet.rows
+sheet = spreadsheet.worksheets[0]
 
 class Table
   include Enumerable
+  attr_reader :sheet
 
-  def initialize(n)
-    @sheet = n
+  def initialize(sheet)
+    @sheet = sheet
+    @table = sheet.rows
   end
 
   def row(row)
-    @sheet[row]
+    @table[row]
   end
 
-  def sheet
-    @sheet
-  end
-
-  def each
-    @sheet.each do |row|
-      row.each do |el|
-        yield(el)
+  def each()
+    @table.each do |row|
+      row.each do |n|
+        yield n
       end
     end
   end
 
-  def [](col)
-    idx = @sheet.first.index(col)
+  def [](name)
+    idx = @sheet.rows[0].index(name)
     raise "Column not found" unless idx
 
-    Column.new(self, idx)
+    Column.new(sheet, idx + 1)
   end
 
-class Column
-    def initialize(table, idx)
-      @te = table
-      @col = idx
+  class Column
+
+    def initialize(sheet, idx)
+      @sheet = sheet
+      @table = sheet.rows
+      @idx = idx
     end
 
-    def [] row
-      @te.sheet[row][@col]
+    def [](row)
+      @sheet[row, @idx]
     end
 
     def []=(row, value)
-      @te.sheet[row, @col] = value
-      @te.sheet.save
+      @sheet[row, @idx] = value
+      @sheet.save
     end
-
   end
+
 end
 
 
- table = Table.new(sheet)
-# row_dva = table.row(1)
-# p row_dva
+
+table = Table.new(sheet)
+# p table.row(1)
 # table.each {|k| p k}
-p table["Prva Kolona"][1]
-# table["Prva Kolona"][1]= 2556
+# p table["Prva Kolona"][2]
+#  p table["Prva Kolona"].class
+# table["Prva Kolona"][2]= 2556
+# p table["Prva Kolona"][2]
