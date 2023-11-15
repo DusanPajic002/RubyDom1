@@ -30,24 +30,24 @@ class Table
     idx = @sheet.rows[0].index(name)
     raise "Column not found" unless idx
 
-    Column.new(sheet, idx + 1)
+    Column.new(sheet, idx)
   end
 
-  def method_missing(method_name, *arguments, &block)
-    column_name = method_name.to_s.split('_').collect(&:capitalize).join(' ')
-    if @sheet.rows[0].include?(column_name)
-      define_singleton_method(method_name) do
-        Column.new(@sheet, @sheet.rows[0].index(column_name))
-      end
-      send(method_name)
+  def method_missing(name, *args, &block)
+    column_name = name.to_s.gsub(/(.)([A-Z])/, '\1 \2').split.map(&:capitalize).join(' ') # Converts prvaKolona to Prva Kolona
+    if @sheet.rows.first.include?(column_name)
+      self[column_name]
     else
       super
     end
   end
 
-  def respond_to_missing?(method_name, include_private = false)
-    @sheet.rows[0].map { |header| header.downcase.gsub(' ', '_') }.include?(method_name.to_s) || super
+  def respond_to_missing?(name, include_private = false)
+    column_name = name.to_s.gsub(/(.)([A-Z])/, '\1 \2').split.map(&:capitalize).join(' ')
+    @sheet.rows.first.include?(column_name) || super
   end
+
+
 
     class Column
 
@@ -55,14 +55,6 @@ class Table
           @sheet = sheet
           @table = sheet.rows
           @idx = idx
-        end
-
-        def find(value)
-          @table.each do |row|
-            return row if
-            row[0] == value
-          end
-            nil
         end
 
         def each
@@ -80,14 +72,26 @@ class Table
           @sheet.save
         end
 
+        def method_missing(name, *args, &block)
+          if name.to_s.start_with?('rn')
+            value = name.to_s[2..-1]
+            find_row_number(value)
+          else
+            super
+          end
+        end
+
+        def respond_to_missing?(name, include_private = false)
+          name.to_s.start_with?('rn') || super
+        end
+
         def sum
-          @table[1..-1].inject(0) { |sum, row| sum + row[@idx].to_f }
+          @table.map { |row| row[@idx].to_i }.reduce(0, :+)
         end
 
         def avg
           sum.to_f / (@table.size - 1)
         end
-
     end
 end
 
@@ -99,7 +103,6 @@ table = Table.new(sheet)
 # p table["Prva Kolona"][2]
 #  p table["Prva Kolona"].class
 # table["Prva Kolona"][2]= 2556
-# p table["Prva Kolona"][2]
-table.prva_kolona.each {|k| p k}
-row = table.prva_kolona.find("rn10722") # Replace 'rn2310' with a real value from your data
-puts row.inspect
+# table.drugaKolona.each {|k| p k}
+# table.prvaKolona.sum
+p table.index.rn10222
