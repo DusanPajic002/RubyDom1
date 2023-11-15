@@ -57,6 +57,14 @@ class Table
           @idx = idx
         end
 
+        def find(value)
+          @table.each do |row|
+            return row if
+            row[0] == value
+          end
+            nil
+        end
+
         def each
           @table.each do |row|
             yield row[@idx]
@@ -80,15 +88,6 @@ class Table
           sum.to_f / (@table.size - 1)
         end
 
-        def method_missing(method_name, *arguments, &block)
-          if method_name.to_s.start_with?('rn')
-            student_id = method_name[2..-1]
-            @table[1..-1].find { |row| row[@idx] == student_id }
-          else
-            super
-          end
-        end
-
     end
 end
 
@@ -96,9 +95,11 @@ end
 
 table = Table.new(sheet)
 # p table.row(1)
-# table.each {|k| p k}
+#  table.each {|k| p k}
 # p table["Prva Kolona"][2]
-# p table["Prva Kolona"].class
+#  p table["Prva Kolona"].class
 # table["Prva Kolona"][2]= 2556
 # p table["Prva Kolona"][2]
-table.druga_kolona.each {|k| p k}
+table.prva_kolona.each {|k| p k}
+row = table.prva_kolona.find("rn10722") # Replace 'rn2310' with a real value from your data
+puts row.inspect
