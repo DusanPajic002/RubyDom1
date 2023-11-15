@@ -117,23 +117,23 @@ end
 
 table = Table.new(sheet)
 # p table.row(1)
-p "--------------"
+# p "--------------"
 # table.each {|k| p k}
-p "--------------"
+# p "--------------"
 # p table["Prva Kolona"][1]
-p "--------------"
-p table["Prva Kolona"].class
-p "--------------"
-table["Prva Kolona"][2]= 2556
-p "--------------"
-table.index.each {|k| p k}
-p "--------------"
-p table.prvaKolona.avg
-p "--------------"
-p table.index.rn10722
-p "--------------"
+# p "--------------"
+# p table["Prva Kolona"].class
+# p "--------------"
+# table["Prva Kolona"][2]= 2556
+# p "--------------"
+# table.index.each {|k| p k}
+# p "--------------"
+# p table.prvaKolona.avg
+# p "--------------"
+# p table.index.rn10722
+# p "--------------"
 # p table.prvaKolona.map { |cell| cell.to_i + 1 }
-p "--------------"
+# p "--------------"
 # p table.prvaKolona[2]
-p "--------------"
+# p "--------------"
 # p table.prvaKolona.select { |value| value.to_i > 10 }
