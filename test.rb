@@ -29,37 +29,20 @@ class Table
   def [](name)
     idx = @sheet.rows[0].index(name)
     raise "Column not found" unless idx
-
     Column.new(sheet, idx)
   end
-  def index
-      p 12321321321
-  end
+
 
   def method_missing(name, *args)
-    column_name = name.to_s.gsub(/(.)([A-Z])/, '\1 \2').split.map(&:capitalize).join(' ')
-    if @sheet.rows.first.include?(column_name)
-      self[column_name]
-    else
-      super
-    end
-  end
-
-  def index
-    Indexer.new(@table)
-  end
-
-
-    class Indexer
-      def initialize(data)
-        @data = data
-      end
-
-      def method_missing(method_name, *arguments, &block)
-        search_value = method_name.to_s # Pretvara ime metode u string
-        @data.find { |row| row.any? { |cell| cell.to_s.include?(search_value) } }
+    str = name.to_s.downcase.gsub(/\s+/, "")
+    @table[0].each_with_index do |n, idx|
+      head = n.to_s.downcase.gsub(/\s+/, "")
+      if str == head
+        return Column.new(@sheet, idx)
       end
     end
+    super
+  end
 
     class Column
         def initialize(sheet, idx)
@@ -83,6 +66,17 @@ class Table
           @sheet.save
         end
 
+        def method_missing(name, *args, &block)
+          niz = []
+          self.each {|k| niz << k}
+          niz.each_with_index do |n , row_idx|
+            if name.to_s == n
+              return @table[row_idx]
+            end
+          end
+            super
+        end
+
         def sum
           @table.map { |row| row[@idx].to_i }.reduce(0, :+)
         end
@@ -90,18 +84,17 @@ class Table
         def avg
           sum / (@table.size - 1)
         end
-
     end
 end
 
 
 
 table = Table.new(sheet)
-# p table.row(1)
+#  p table.row(1)
 #  table.each {|k| p k}
 # p table["Prva Kolona"][2]
 #  p table["Prva Kolona"].class
 # table["Prva Kolona"][2]= 2556
-#  table.drugaKolona.each {|k| p k}
-# p table.prvaKolona.sum
-p table.index.rn10222
+#  table.index.each {|k| p k}
+#  p table.prvaKolona.avg
+# p table.index.rn10722
