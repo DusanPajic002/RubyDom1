@@ -32,9 +32,12 @@ class Table
 
     Column.new(sheet, idx)
   end
+  def index
+      p 12321321321
+  end
 
-  def method_missing(name, *args, &block)
-    column_name = name.to_s.gsub(/(.)([A-Z])/, '\1 \2').split.map(&:capitalize).join(' ') # Converts prvaKolona to Prva Kolona
+  def method_missing(name, *args)
+    column_name = name.to_s.gsub(/(.)([A-Z])/, '\1 \2').split.map(&:capitalize).join(' ')
     if @sheet.rows.first.include?(column_name)
       self[column_name]
     else
@@ -42,15 +45,23 @@ class Table
     end
   end
 
-  def respond_to_missing?(name, include_private = false)
-    column_name = name.to_s.gsub(/(.)([A-Z])/, '\1 \2').split.map(&:capitalize).join(' ')
-    @sheet.rows.first.include?(column_name) || super
+  def index
+    Indexer.new(@table)
   end
 
 
+    class Indexer
+      def initialize(data)
+        @data = data
+      end
+
+      def method_missing(method_name, *arguments, &block)
+        search_value = method_name.to_s # Pretvara ime metode u string
+        @data.find { |row| row.any? { |cell| cell.to_s.include?(search_value) } }
+      end
+    end
 
     class Column
-
         def initialize(sheet, idx)
           @sheet = sheet
           @table = sheet.rows
@@ -72,26 +83,14 @@ class Table
           @sheet.save
         end
 
-        def method_missing(name, *args, &block)
-          if name.to_s.start_with?('rn')
-            value = name.to_s[2..-1]
-            find_row_number(value)
-          else
-            super
-          end
-        end
-
-        def respond_to_missing?(name, include_private = false)
-          name.to_s.start_with?('rn') || super
-        end
-
         def sum
           @table.map { |row| row[@idx].to_i }.reduce(0, :+)
         end
 
         def avg
-          sum.to_f / (@table.size - 1)
+          sum / (@table.size - 1)
         end
+
     end
 end
 
@@ -103,6 +102,6 @@ table = Table.new(sheet)
 # p table["Prva Kolona"][2]
 #  p table["Prva Kolona"].class
 # table["Prva Kolona"][2]= 2556
-# table.drugaKolona.each {|k| p k}
-# table.prvaKolona.sum
+#  table.drugaKolona.each {|k| p k}
+# p table.prvaKolona.sum
 p table.index.rn10222
