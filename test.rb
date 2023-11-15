@@ -51,19 +51,45 @@ class Table
           @idx = idx
         end
 
+        def [](row)
+          @sheet[row + 1, @idx + 1]
+        end
+
+        def []=(row, value)
+          @sheet[row + 1, @idx + 1] = value
+          @sheet.save
+        end
+
+        def map(&block)
+          @table.each_with_index do |row, row_index|
+            next if row_index.zero?
+
+            cell_value = row[@idx]
+            new_value = yield(cell_value)
+            @sheet[row_index + 1, @idx + 1] = new_value
+          end
+          @sheet.save
+        end
+
+        def select
+          sel = []
+          @table.drop(1).each do |row|
+            sel << row[@idx] if yield(row[@idx])
+          end
+          sel
+        end
+
+        def reduce(ini)
+          acc = ini
+          @tabela.drop(1).each do |row|
+            acc = yield(acc, row[@idx])
+          end
+        end
+
         def each
           @table.each do |row|
             yield row[@idx]
           end
-        end
-
-        def [](row)
-          @sheet[row, @idx]
-        end
-
-        def []=(row, value)
-          @sheet[row, @idx] = value
-          @sheet.save
         end
 
         def method_missing(name, *args, &block)
@@ -90,11 +116,24 @@ end
 
 
 table = Table.new(sheet)
-#  p table.row(1)
-#  table.each {|k| p k}
-# p table["Prva Kolona"][2]
-#  p table["Prva Kolona"].class
-# table["Prva Kolona"][2]= 2556
-#  table.index.each {|k| p k}
-#  p table.prvaKolona.avg
-# p table.index.rn10722
+# p table.row(1)
+p "--------------"
+# table.each {|k| p k}
+p "--------------"
+# p table["Prva Kolona"][1]
+p "--------------"
+p table["Prva Kolona"].class
+p "--------------"
+table["Prva Kolona"][2]= 2556
+p "--------------"
+table.index.each {|k| p k}
+p "--------------"
+p table.prvaKolona.avg
+p "--------------"
+p table.index.rn10722
+p "--------------"
+# p table.prvaKolona.map { |cell| cell.to_i + 1 }
+p "--------------"
+# p table.prvaKolona[2]
+p "--------------"
+# p table.prvaKolona.select { |value| value.to_i > 10 }
