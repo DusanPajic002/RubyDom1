@@ -4,18 +4,33 @@ session = GoogleDrive::Session.from_config("config.json")
 spreadsheet = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
 sheet = spreadsheet.worksheets[0]
 
+spreadsheet1 = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
+sheet1 = spreadsheet1.worksheets[1]
+
 class Table
   include Enumerable
   attr_reader :sheet
-  attr_reader :table
 
   def initialize(sheet)
     @sheet = sheet
-    @table = sheet.rows
+    @table = sheet.rows.reject do |row|
+      row.all? { |cell| cell.nil? || cell.strip.empty? } ||
+      row.any? { |cell| cell.to_s.strip.downcase.include?("total") || cell.to_s.strip.downcase.include?("subtotal") }
+    end
+  end
+
+  def table
+    @table
   end
 
   def row(row)
     @table[row]
+  end
+
+  def print_table(tabl)
+    tabl.table.each do |row|
+      puts row.inspect
+    end
   end
 
   def each()
@@ -28,10 +43,9 @@ class Table
 
   def [](name)
     idx = @sheet.rows[0].index(name)
-    raise "Column not found" unless idx
-    Column.new(sheet, idx)
+    raise "Nije pronadjena" unless idx
+    Column.new(@sheet, idx)
   end
-
 
   def method_missing(name, *args)
     str = name.to_s.downcase.gsub(/\s+/, "")
@@ -52,7 +66,7 @@ class Table
         end
 
         def [](row)
-          @sheet[row + 1, @idx + 1]
+          @table[row + 1, @idx + 1]
         end
 
         def []=(row, value)
@@ -63,6 +77,7 @@ class Table
         def map(&block)
           @table.each_with_index do |row, row_index|
             next if row_index.zero?
+            next if  row.all? { |cell| cell.nil? || cell.strip.empty? } || row[@idx].to_s.downcase.include?('total') || row[@idx].to_s.downcase.include?('subtotal')
 
             cell_value = row[@idx]
             new_value = yield(cell_value)
@@ -116,6 +131,7 @@ end
 
 
 table = Table.new(sheet)
+table1 = Table.new(sheet1)
 # p table.row(1)
 # p "--------------"
 # table.each {|k| p k}
@@ -124,7 +140,7 @@ table = Table.new(sheet)
 # p "--------------"
 # p table["Prva Kolona"].class
 # p "--------------"
-# table["Prva Kolona"][2]= 2556
+# table["Prva Kolona"][2]= 2551
 # p "--------------"
 # table.index.each {|k| p k}
 # p "--------------"
@@ -132,8 +148,21 @@ table = Table.new(sheet)
 # p "--------------"
 # p table.index.rn10722
 # p "--------------"
-# p table.prvaKolona.map { |cell| cell.to_i + 1 }
+ p table.prvaKolona.map { |cell| cell.to_i + 2 }
 # p "--------------"
 # p table.prvaKolona[2]
 # p "--------------"
 # p table.prvaKolona.select { |value| value.to_i > 10 }
+puts ""
+p "--------table---------"
+table.print_table(table)
+puts ""
+p "--------table1--------"
+table1.print_table(table1)
+puts ""
+p "--------Combo---------"
+# tableComb = table+table1;
+#   tableComb.each do |row|
+#     puts row.inspect
+#   end
+# puts ""
