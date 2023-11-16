@@ -43,11 +43,12 @@ class Table
 
   def +(table1)
     raise "Nisu isti hederi" unless table1.table.first == @table.first
+
     combo_sheet = $spreadsheet.worksheets[2]
     table = Table.new(combo_sheet)
     comb = (@table + table1.table).uniq
     comb.each_with_index do |row, idx|
-      row.each_with_index {|cell, idx_c|table.sheet[idx + 1,idx_c + 1] = cell}
+      row.each_with_index { |cell, idx_c| table.sheet[idx + 1,idx_c + 1] = cell}
     end
     table.sheet.save
     table
@@ -55,9 +56,19 @@ class Table
 
   def -(table1)
     raise "Nisu isti hederi" unless table1.table.first == @table.first
-    comb = self.table.reject do |row|
-      table1.table.any? { |row_t| row == row_ts }
+
+    combo_sheet = $spreadsheet.worksheets[3]
+    table = Table.new(combo_sheet)
+
+    comb = @table.reject do |row|
+      table1.table.any? { |row_t| row == row_t }
     end
+    comb.unshift(@table.first)
+    comb.each_with_index do |row, idx|
+      row.each_with_index { |cell, idx_c| table.sheet[idx + 1,idx_c + 1] = cell}
+    end
+    table.sheet.save
+    table
   end
 
   def method_missing(name, *args)
@@ -162,17 +173,16 @@ table1 = Table.new(sheet1)
 # p table.prvaKolona[2]
 # p "--------------"
 # p table.prvaKolona.select { |value| value.to_i > 10 }
-puts ""
-p "--------table---------"
-table.print_table(table)
-puts ""
-p "--------table1--------"
-table1.print_table(table1)
-puts ""
-p "--------Combo(+)------"
-tableCombP = table + table1;
-puts "done"
-p "--------Combo(-)------"
-tableCombM = table - table1;
- tableCombM.table.each {|row| puts row.inspect}
-puts "done"
+# puts ""
+# p "--------table---------"
+# table.print_table(table)
+# puts ""
+# p "--------table1--------"
+# table1.print_table(table1)
+# puts ""
+# p "--------Combo(+)------"
+# tableCombP = table + table1;
+# puts "done"
+# p "--------Combo(-)------"
+# tableCombM = table1 - table;
+# puts "done"
