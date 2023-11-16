@@ -1,11 +1,9 @@
 require "google_drive"
 
 session = GoogleDrive::Session.from_config("config.json")
-spreadsheet = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
-sheet = spreadsheet.worksheets[0]
-
-spreadsheet1 = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
-sheet1 = spreadsheet1.worksheets[1]
+$spreadsheet = session.spreadsheet_by_key("1rwfAax11xRiqGEoKELU42pneJMoY-8fDmiIlVSXOcH8")
+sheet = $spreadsheet.worksheets[0]
+sheet1 = $spreadsheet.worksheets[1]
 
 class Table
   include Enumerable
@@ -27,6 +25,12 @@ class Table
     @table[row]
   end
 
+  def [](name)
+    idx = @sheet.rows[0].index(name)
+    raise "Nije pronadjena" unless idx
+    Column.new(@sheet, idx)
+  end
+
   def print_table(tabl)
     tabl.table.each do |row|
       puts row.inspect
@@ -34,17 +38,26 @@ class Table
   end
 
   def each()
-    @table.each do |row|
-      row.each do |n|
-        yield n
-      end
-    end
+    @table.each { |row| row.each {|n| yield n}}
   end
 
-  def [](name)
-    idx = @sheet.rows[0].index(name)
-    raise "Nije pronadjena" unless idx
-    Column.new(@sheet, idx)
+  def +(table1)
+    raise "Nisu isti hederi" unless table1.table.first == @table.first
+    combo_sheet = $spreadsheet.worksheets[2]
+    table = Table.new(combo_sheet)
+    comb = (@table + table1.table).uniq
+    comb.each_with_index do |row, idx|
+      row.each_with_index {|cell, idx_c|table.sheet[idx + 1,idx_c + 1] = cell}
+    end
+    table.sheet.save
+    table
+  end
+
+  def -(table1)
+    raise "Nisu isti hederi" unless table1.table.first == @table.first
+    comb = self.table.reject do |row|
+      table1.table.any? { |row_t| row == row_ts }
+    end
   end
 
   def method_missing(name, *args)
@@ -96,15 +109,11 @@ class Table
 
         def reduce(ini)
           acc = ini
-          @tabela.drop(1).each do |row|
-            acc = yield(acc, row[@idx])
-          end
+          @tabela.drop(1).each { |row|   acc = yield(acc, row[@idx])}
         end
 
         def each
-          @table.each do |row|
-            yield row[@idx]
-          end
+          @table.each {|row| yield row[@idx]}
         end
 
         def method_missing(name, *args, &block)
@@ -134,7 +143,7 @@ table = Table.new(sheet)
 table1 = Table.new(sheet1)
 # p table.row(1)
 # p "--------------"
-# table.each {|k| p k}
+#  table.each {|k| p k}
 # p "--------------"
 # p table["Prva Kolona"][1]
 # p "--------------"
@@ -148,7 +157,7 @@ table1 = Table.new(sheet1)
 # p "--------------"
 # p table.index.rn10722
 # p "--------------"
- p table.prvaKolona.map { |cell| cell.to_i + 2 }
+#  p table.prvaKolona.map { |cell| cell.to_i + 2 }
 # p "--------------"
 # p table.prvaKolona[2]
 # p "--------------"
@@ -160,9 +169,10 @@ puts ""
 p "--------table1--------"
 table1.print_table(table1)
 puts ""
-p "--------Combo---------"
-# tableComb = table+table1;
-#   tableComb.each do |row|
-#     puts row.inspect
-#   end
-# puts ""
+p "--------Combo(+)------"
+tableCombP = table + table1;
+puts "done"
+p "--------Combo(-)------"
+tableCombM = table - table1;
+ tableCombM.table.each {|row| puts row.inspect}
+puts "done"
